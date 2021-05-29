@@ -1,6 +1,8 @@
 import axios, { AxiosError } from 'axios';
 import { parseCookies, setCookie } from 'nookies';
 
+import { signOut } from '../contexts/AuthContext';
+
 // const cookies = parseCookies();
 let cookies = parseCookies();
 let isRefreshing = false;
@@ -15,10 +17,11 @@ export const api = axios.create({
 
 api.interceptors.response.use(
   (response) => response,
-  //  async (error: AxiosError) => {  >>>> 1/2 - Dá erro, Axios não permite que essa função seje uma promisse
   (error: AxiosError) => {
+  //  async (error: AxiosError) => {  >>>> 1/2 - Dá erro, Axios não permite que essa função seje uma promisse
     // console.log(error.response.status);
     if (error.response.status === 401) {
+      // erro de não autorizado
       if (error.response.data?.code === 'token.expired') {
         // renovar token
         cookies = parseCookies(); // pegar os cookies atualizados
@@ -78,7 +81,10 @@ api.interceptors.response.use(
         });
       } else {
         // delogar usuário
+        signOut();
       }
     }
+
+    return Promise.reject(error); // para propagar os eros não tratados.
   }
 );
